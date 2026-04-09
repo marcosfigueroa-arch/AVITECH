@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AviárioPro • Manejo Inteligente</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; }
+        .title-font { font-family: 'Space Grotesk', sans-serif; }
+
+        /* SKELETON LOADING */
+        .skeleton {
+            background: linear-gradient(90deg, #1f2937 25%, #374151 50%, #1f2937 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+        }
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .animate-fade-up { animation: fadeUp 0.8s ease forwards; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-200">
+
+<header class="bg-gradient-to-r from-emerald-800 to-teal-800 border-b border-emerald-700 sticky top-0 z-50">
+    <div class="max-w-screen-2xl mx-auto px-8 py-5 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-white rounded-3xl flex items-center justify-center text-4xl">🐔</div>
+            <div>
+                <h1 class="text-4xl font-bold tracking-tighter title-font text-white">AviárioPro</h1>
+                <p class="text-emerald-300 text-sm -mt-1">Manejo Inteligente de Corte</p>
+            </div>
+        </div>
+        
+        <div class="flex gap-4">
+            <button onclick="atualizarComLoading()" class="flex items-center gap-3 bg-slate-800 hover:bg-slate-700 px-6 py-3 rounded-3xl font-medium">
+                <i class="fa-solid fa-sync"></i> Atualizar
+            </button>
+            <button onclick="abrirExportModal()" class="flex items-center gap-3 bg-white text-slate-900 px-7 py-3.5 rounded-3xl font-semibold hover:bg-emerald-100">
+                <i class="fa-solid fa-download"></i> Exportar
+            </button>
+        </div>
+    </div>
+</header>
+
+<div class="flex max-w-screen-2xl mx-auto">
+    <div class="w-72 bg-slate-900 border-r border-slate-800 min-h-screen py-8 px-6 hidden lg:flex flex-col">
+        <nav class="space-y-2">
+            <a onclick="mostrarSecao('dashboard')" class="sidebar-link active flex items-center gap-3 px-6 py-4" id="nav-dashboard"><i class="fa-solid fa-house"></i> Dashboard</a>
+            <a onclick="mostrarSecao('peso')" class="sidebar-link flex items-center gap-3 px-6 py-4" id="nav-peso"><i class="fa-solid fa-weight-scale"></i> Peso</a>
+            <a onclick="mostrarSecao('racao')" class="sidebar-link flex items-center gap-3 px-6 py-4" id="nav-racao"><i class="fa-solid fa-wheat-awn"></i> Ração</a>
+            <a onclick="mostrarSecao('clima')" class="sidebar-link flex items-center gap-3 px-6 py-4" id="nav-clima"><i class="fa-solid fa-temperature-half"></i> Clima</a>
+        </nav>
+    </div>
+
+    <div class="flex-1 p-8">
+        <!-- DASHBOARD -->
+        <div id="secao-dashboard">
+            <h2 class="text-4xl font-bold title-font mb-2">Dashboard Unificado</h2>
+            <p class="text-slate-400 mb-8">Lote #2026-12 • 28 dias</p>
+
+            <!-- SKELETON LOADING -->
+            <div id="skeleton-loading" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-12">
+                <!-- 6 Skeleton Cards -->
+                <div class="bg-slate-900 rounded-3xl p-6 h-40 skeleton"></div>
+                <div class="bg-slate-900 rounded-3xl p-6 h-40 skeleton"></div>
+                <div class="bg-slate-900 rounded-3xl p-6 h-40 skeleton"></div>
+                <div class="bg-slate-900 rounded-3xl p-6 h-40 skeleton"></div>
+                <div class="bg-slate-900 rounded-3xl p-6 h-40 skeleton"></div>
+                <div class="bg-slate-900 rounded-3xl p-6 h-40 skeleton"></div>
+            </div>
+
+            <!-- Conteúdo Real (escondido inicialmente) -->
+            <div id="content-real" class="hidden grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-12">
+                <!-- Cards reais serão inseridos via JS -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EXPORT -->
+<div id="export-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-xl flex items-center justify-center z-[100]">
+    <div class="modal bg-slate-900 rounded-3xl w-full max-w-lg mx-4 p-8">
+        <h3 class="text-2xl font-bold mb-6">Exportar Relatório</h3>
+        <!-- opções de exportação -->
+        <button onclick="exportarPDF()" class="w-full py-4 bg-emerald-600 rounded-3xl text-white font-medium mb-3">PDF Completo</button>
+        <button onclick="exportarExcel()" class="w-full py-4 bg-slate-700 rounded-3xl text-white font-medium">Excel</button>
+    </div>
+</div>
+
+<script>
+// ==================== SKELETON LOADING ====================
+function showSkeleton() {
+    document.getElementById('skeleton-loading').classList.remove('hidden');
+    document.getElementById('content-real').classList.add('hidden');
+}
+
+function hideSkeleton() {
+    document.getElementById('skeleton-loading').classList.add('hidden');
+    document.getElementById('content-real').classList.remove('hidden');
+}
+
+// ==================== CARDS REAIS ====================
+function renderRealCards() {
+    const container = document.getElementById('content-real');
+    container.innerHTML = `
+        <div class="bg-slate-900 rounded-3xl p-6 animate-fade-up"><i class="fa-solid fa-weight-scale text-4xl text-emerald-400"></i><p class="text-slate-400 mt-4">Peso Médio</p><p class="text-3xl font-bold">2.35 kg</p></div>
+        <div class="bg-slate-900 rounded-3xl p-6 animate-fade-up stagger-1"><i class="fa-solid fa-wheat-awn text-4xl text-amber-400"></i><p class="text-slate-400 mt-4">Consumo Ração</p><p class="text-3xl font-bold">11.200 kg</p></div>
+        <div class="bg-slate-900 rounded-3xl p-6 animate-fade-up stagger-2"><i class="fa-solid fa-skull-crossbones text-4xl text-red-400"></i><p class="text-slate-400 mt-4">Mortalidade</p><p class="text-3xl font-bold">4.8%</p></div>
+        <div class="bg-slate-900 rounded-3xl p-6 animate-fade-up stagger-3"><i class="fa-solid fa-temperature-half text-4xl text-orange-400"></i><p class="text-slate-400 mt-4">Temperatura</p><p class="text-3xl font-bold">28.4°C</p></div>
+        <div class="bg-slate-900 rounded-3xl p-6 animate-fade-up stagger-4"><i class="fa-solid fa-droplet text-4xl text-blue-400"></i><p class="text-slate-400 mt-4">Umidade</p><p class="text-3xl font-bold">75%</p></div>
+        <div class="bg-slate-900 rounded-3xl p-6 animate-fade-up stagger-5"><i class="fa-solid fa-fan text-4xl text-teal-400"></i><p class="text-slate-400 mt-4">Ventilação</p><p class="text-3xl font-bold">88%</p></div>
+    `;
+}
+
+// ==================== LOADING COM SKELETON ====================
+async function atualizarComLoading() {
+    showSkeleton();
+    
+    // Simula carregamento
+    await new Promise(resolve => setTimeout(resolve, 1850));
+    
+    hideSkeleton();
+    renderRealCards();
+    alert("✅ Dados carregados com Skeleton Loading!");
+}
+
+function abrirExportModal() {
+    document.getElementById('export-modal').classList.remove('hidden');
+    document.getElementById('export-modal').classList.add('flex');
+}
+
+function fecharExportModal() {
+    document.getElementById('export-modal').classList.add('hidden');
+    document.getElementById('export-modal').classList.remove('flex');
+}
+
+function exportarPDF() {
+    fecharExportModal();
+    alert("📄 PDF gerado com sucesso!");
+}
+
+// Inicialização
+window.onload = () => {
+    // Começa com skeleton
+    showSkeleton();
+    
+    // Depois de 1.2s carrega o conteúdo real
+    setTimeout(() => {
+        hideSkeleton();
+        renderRealCards();
+    }, 1200);
+};
+</script>
+</body>
+</html>
